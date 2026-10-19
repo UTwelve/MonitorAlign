@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    边缘泛光设置页：启用开关 + 效果参数（灵敏度/亮度/距离）+ 接缝颜色。
+
+    全是 WinUI 原生控件（ToggleSwitch / NumberBox / Slider / ComboBox / ListView），
+    不再手搓样式 —— winui3-skills 的规则之一。
+    卡片写法同对齐页：CardBackgroundFillColorDefaultBrush + 描边 + 圆角 8。
+-->
+<Page
+    x:Class="MonitorAlign.Views.GlowPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:loc="using:MonitorAlign"
+    xmlns:vm="using:MonitorAlign.ViewModels"
+    NavigationCacheMode="Required">
+
+    <Page.Resources>
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}"/>
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+    </Page.Resources>
+
+    <Grid>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Padding="24,20,24,24" MaxWidth="880" HorizontalAlignment="Stretch">
+
+            <TextBlock Text="{x:Bind loc:Loc.NavEdgeGlow}"
+                       Style="{ThemeResource TitleTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorPrimaryBrush}" TextWrapping="Wrap"/>
+            <TextBlock Text="{x:Bind loc:Loc.EdgeGlowDesc}"
+                       Style="{ThemeResource BodyTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       TextWrapping="Wrap" Margin="0,8,0,0"/>
+
+            <!-- ① 启用：开着时关主窗只缩到托盘（托盘/自启在后续任务） -->
+            <Border Style="{StaticResource Card}" Margin="0,14,0,0">
+                <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="{x:Bind loc:Loc.EdgeGlowToggle}"
+                               Style="{ThemeResource BodyStrongTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                               TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    <ToggleSwitch Grid.Column="1" VerticalAlignment="Center"
+                                  IsOn="{x:Bind ViewModel.Enabled, Mode=TwoWay}"
+                                  OnContent="{x:Bind loc:Loc.ToggleOn}"
+                                  OffContent="{x:Bind loc:Loc.ToggleOff}"
+                                  AutomationProperties.Name="{x:Bind loc:Loc.EdgeGlowToggle}"/>
+                </Grid>
+            </Border>
+
+            <!-- ② 效果参数 -->
+            <Border Style="{StaticResource Card}" Margin="0,4,0,0">
+                <StackPanel>
+                    <TextBlock Text="{x:Bind loc:Loc.GlowSectionEffect}"
+                               Style="{ThemeResource BodyStrongTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorPrimaryBrush}" TextWrapping="Wrap"/>
+
+                    <!-- 灵敏度（倍数）：起辉距离 = 120px ÷ 倍数 -->
+                    <StackPanel Margin="0,16,0,0">
+                        <TextBlock Text="{x:Bind loc:Loc.GlowSensitivity}"
+                                   Style="{ThemeResource BodyTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   TextWrapping="Wrap"/>
+                        <TextBlock Text="{x:Bind ViewModel.SensitivityHint, Mode=OneWay}"
+                                   Style="{ThemeResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                   TextWrapping="Wrap" Margin="0,2,0,0"/>
+                        <NumberBox Width="150" Minimum="0.25" Maximum="8"
+                                   HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,8,0,0"
+                                   SmallChange="0.25" SpinButtonPlacementMode="Compact"
+                                   Value="{x:Bind ViewModel.Sensitivity, Mode=TwoWay}"
+                                   AutomationProperties.Name="{x:Bind loc:Loc.GlowSensitivity}"/>
+                    </StackPanel>
+
+                    <!-- 亮度：标签独占一行、读数靠右，滑条在下一行拉满整宽。
+                         原来是「标签在左、滑条在右」两列并排 —— 英文 "Brightness"
+                         在剩下的窄列里被折成 "Bright / ness"（卡片只有 ~248px 宽）。
+                         标签行不设宽度上限，换任何语言都不会再撞车。 -->
+                    <Grid ColumnSpacing="16" Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{x:Bind loc:Loc.GlowBrightness}"
+                                   Style="{ThemeResource BodyTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   TextWrapping="Wrap" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.BrightnessText, Mode=OneWay}"
+                                   Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                   TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    </Grid>
+                    <Slider Margin="0,6,0,0"
+                            Minimum="0.05" Maximum="1" TickFrequency="0.05"
+                            HorizontalAlignment="Stretch"
+                            Value="{x:Bind ViewModel.Brightness, Mode=TwoWay}"
+                            AutomationProperties.Name="{x:Bind loc:Loc.GlowBrightness}"/>
+
+                    <!-- 加性强度（尾部白度）：source-over 下最接近真 ADD 的地方 -->
+                    <Grid ColumnSpacing="16" Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{x:Bind loc:Loc.GlowTailWhite}"
+                                   Style="{ThemeResource BodyTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   TextWrapping="Wrap" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.TailWhitenessText, Mode=OneWay}"
+                                   Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                   TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    </Grid>
+                    <Slider Margin="0,6,0,0"
+                            Minimum="0" Maximum="1" TickFrequency="0.05"
+                            HorizontalAlignment="Stretch"
+                            Value="{x:Bind ViewModel.TailWhiteness, Mode=TwoWay}"
+                            AutomationProperties.Name="{x:Bind loc:Loc.GlowTailWhite}"/>
+                    <TextBlock Text="{x:Bind loc:Loc.GlowTailWhiteHint}"
+                               Style="{ThemeResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                               TextWrapping="Wrap" Margin="0,2,0,0"/>
+
+                    <!-- 光晕距离：光从接缝向两侧照射多远。
+                         旧的 24..320 已经放开，手填不设功能上限，
+                         只挡"会生成万像素窗口"的异常值。 -->
+                    <StackPanel Margin="0,14,0,0">
+                        <TextBlock Text="{x:Bind loc:Loc.GlowDistance}"
+                                   Style="{ThemeResource BodyTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   TextWrapping="Wrap"/>
+                        <TextBlock Text="{x:Bind loc:Loc.GlowDistanceHint}"
+                                   Style="{ThemeResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                   TextWrapping="Wrap" Margin="0,2,0,0"/>
+                        <NumberBox Width="150" Minimum="8" Maximum="20000"
+                                   HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,8,0,0"
+                                   SmallChange="16" SpinButtonPlacementMode="Compact"
+                                   Value="{x:Bind ViewModel.Distance, Mode=TwoWay}"
+                                   AutomationProperties.Name="{x:Bind loc:Loc.GlowDistance}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ③ 接缝颜色 -->
+            <Border Style="{StaticResource Card}" Margin="0,4,0,0">
+                <StackPanel>
+                    <TextBlock Text="{x:Bind loc:Loc.GlowSeamColors}"
+                               Style="{ThemeResource BodyStrongTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorPrimaryBrush}" TextWrapping="Wrap"/>
+                    <TextBlock Text="{x:Bind loc:Loc.GlowSeamColorsDesc}"
+                               Style="{ThemeResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                               TextWrapping="Wrap" Margin="0,8,0,0"/>
+
+                    <!-- 挑一条尚未自定义的接缝 → 加入列表 -->
+                    <Grid Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ComboBox Grid.Column="0" HorizontalAlignment="Stretch"
+                                  ItemsSource="{x:Bind ViewModel.Pickable, Mode=OneWay}"
+                                  SelectedItem="{x:Bind ViewModel.Picked, Mode=TwoWay}"
+                                  DisplayMemberPath="Label"
+                                  AutomationProperties.Name="{x:Bind loc:Loc.GlowAddSeam}"/>
+                        <Button Grid.Column="1" Margin="8,0,0,0"
+                                Command="{x:Bind ViewModel.AddPickedCommand}"
+                                ToolTipService.ToolTip="{x:Bind loc:Loc.GlowAddSeam}"
+                                AutomationProperties.Name="{x:Bind loc:Loc.GlowAddSeam}">
+                            <SymbolIcon Symbol="Add"/>
+                        </Button>
+                    </Grid>
+
+                    <!-- 已自定义的接缝：色块 + 接缝名 + 移除 -->
+                    <ListView ItemsSource="{x:Bind ViewModel.Customized, Mode=OneWay}"
+                              SelectionMode="Single" MaxHeight="168" Margin="0,8,0,0"
+                              SelectionChanged="SeamList_SelectionChanged">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:GlowSeamRow">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="20" Height="20" CornerRadius="4"
+                                            VerticalAlignment="Center"
+                                            Background="{x:Bind Hex, Converter={StaticResource HexBrush}}"/>
+                                    <TextBlock Grid.Column="1" Text="{x:Bind Label}"
+                                               Margin="12,0,0,0" VerticalAlignment="Center"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"/>
+                                    <Button Grid.Column="2" Padding="6,2"
+                                            Background="Transparent" BorderThickness="0"
+                                            Command="{x:Bind Remove}"
+                                            ToolTipService.ToolTip="{x:Bind loc:Loc.GlowRemoveSeam}"
+                                            AutomationProperties.Name="{x:Bind loc:Loc.GlowRemoveSeam}">
+                                        <SymbolIcon Symbol="Delete"/>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <TextBlock Text="{x:Bind ViewModel.EmptyHint, Mode=OneWay}"
+                               Style="{ThemeResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                               TextWrapping="Wrap" Margin="0,4,0,0"/>
+
+                    <!-- 编辑器：只在选中了某条接缝时出现 -->
+                    <Border Margin="0,10,0,0" Padding="12" CornerRadius="6"
+                            Background="{ThemeResource ControlFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                            BorderThickness="1"
+                            Visibility="{x:Bind ViewModel.HasSelection, Mode=OneWay}">
+                        <StackPanel>
+                            <TextBlock Text="{x:Bind ViewModel.EditorTitle, Mode=OneWay}"
+                                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorPrimaryBrush}" TextWrapping="Wrap"/>
+
+                            <!--
+                                取色走**弹窗**：这里只放一枚色块按钮（当前色 + #RRGGBB），
+                                点开是一个 ContentDialog，里面才是 WinUI 自带的 ColorPicker。
+                                —— 取色本来就是个"临时任务"，塞在设置页正文里既占地方又挡视线。
+                            -->
+                            <Button Margin="0,10,0,0" HorizontalAlignment="Left"
+                                    Click="OpenColorPicker_Click"
+                                    AutomationProperties.Name="{x:Bind loc:Loc.GlowPickColor}">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <Border Width="20" Height="20" CornerRadius="4"
+                                            VerticalAlignment="Center"
+                                            Background="{x:Bind ViewModel.PickedColorHex, Mode=OneWay, Converter={StaticResource HexBrush}}"/>
+                                    <TextBlock Text="{x:Bind ViewModel.PickedColorHex, Mode=OneWay}"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+
+                            <Button Margin="0,10,0,0" HorizontalAlignment="Left"
+                                    Command="{x:Bind ViewModel.UseThemeCommand}">
+                                <TextBlock Text="{x:Bind loc:Loc.GlowUseTheme}" TextWrapping="Wrap"/>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+
+        <!-- 取色对话框：ContentDialog 里放 WinUI 原生 ColorPicker。
+             拖色盘时颜色实时生效（能看到辉光跟着变），
+             所以「取消」必须整体还原 —— 见 GlowViewModel.CancelColorEdit。 -->
+        <ContentDialog x:Name="PickDialog"
+                       Title="{x:Bind loc:Loc.GlowPickColor}"
+                       PrimaryButtonText="{x:Bind loc:Loc.DlgOk}"
+                       CloseButtonText="{x:Bind loc:Loc.DlgCancel}"
+                       DefaultButton="Primary">
+            <ColorPicker Color="{x:Bind ViewModel.PickedColor, Mode=TwoWay}"
+                         IsAlphaEnabled="False"
+                         IsAlphaSliderVisible="False"
+                         IsAlphaTextInputVisible="False"
+                         IsHexInputVisible="True"
+                         IsMoreButtonVisible="True"
+                         IsColorChannelTextInputVisible="False"
+                         AutomationProperties.Name="{x:Bind loc:Loc.GlowPickColor}"/>
+        </ContentDialog>
+    </Grid>
+</Page>

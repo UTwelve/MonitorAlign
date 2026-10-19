@@ -1,0 +1,29 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!--
+    只放 Wpf.Ui 主题字典里【没有】的键。
+
+    凡是 Fluent 2 标准令牌（TextFillColor*、CardBackgroundFillColor*、ControlFillColor*、
+    AccentFillColor*、ApplicationBackgroundBrush …）一律交给 Wpf.Ui 的 ThemesDictionary。
+    这里千万不能再定义一遍 —— 本字典优先级更高，会把 Wpf.Ui 的浅/深换肤整个盖掉。
+    键名统一加 Ma 前缀，避免未来 Wpf.Ui 新增同名键时打架。
+  -->
+
+  <!-- 拓扑缩略图配色：深度 0（主屏）= 强调色，一眼看出"基准在这"；其余中性灰阶 -->
+  <SolidColorBrush x:Key="MaTopoPrimaryFillBrush"     Color="#4CC2FF" Opacity="0.18"/>
+  <SolidColorBrush x:Key="MaTopoPrimaryStrokeBrush"   Color="#4CC2FF"/>
+  <SolidColorBrush x:Key="MaTopoDepth1FillBrush"      Color="#FFFFFF" Opacity="0.12"/>
+  <SolidColorBrush x:Key="MaTopoDepth1StrokeBrush"    Color="#FFFFFF" Opacity="0.60"/>
+  <SolidColorBrush x:Key="MaTopoDepth2FillBrush"      Color="#FFFFFF" Opacity="0.07"/>
+  <SolidColorBrush x:Key="MaTopoDepth2StrokeBrush"    Color="#FFFFFF" Opacity="0.38"/>
+
+  <!--
+    覆盖层上的对齐标尺：它压在用户壁纸上，不能跟随应用主题，
+    必须自带高对比度（深色壁纸 → 亮色主体 + 深色描边）。
+  -->
+  <SolidColorBrush x:Key="MaMarkerBrush"              Color="#4CC2FF"/>
+  <SolidColorBrush x:Key="MaMarkerOutlineBrush"       Color="#000000"/>
+  <SolidColorBrush x:Key="MaMarkerPanelBrush"         Color="#1F1F1F" Opacity="0.94"/>
+  <SolidColorBrush x:Key="MaMarkerTextBrush"          Color="#FFFFFF"/>
+</ResourceDictionary>

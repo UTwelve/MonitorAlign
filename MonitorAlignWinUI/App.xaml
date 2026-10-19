@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Application
+    x:Class="MonitorAlign.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="using:MonitorAlign.Converters">
+    <Application.Resources>
+        <ResourceDictionary>
+            <!-- 转换器：ViewModel 只给字符串（令牌名 / "#RRGGBB"），
+                 由它们在视图层变成画刷 —— VM 因此不必引用 Microsoft.UI.Xaml.Media。 -->
+            <converters:ThemeBrushConverter x:Key="ThemeBrush"/>
+            <converters:HexBrushConverter x:Key="HexBrush"/>
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+                <!-- 自定义令牌（Ma 前缀）：ThemeDictionary 明暗两套，
+                     颜色全走 ThemeResource，遵循 winui3-skills 的无硬编码色规则 -->
+                <ResourceDictionary Source="Themes/MaTokens.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

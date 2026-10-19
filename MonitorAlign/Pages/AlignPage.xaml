@@ -1,0 +1,13 @@
+<Page x:Class="MonitorAlign.Pages.AlignPage"
+         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+    <!--
+        空容器页：对齐功能的全部内容（PageHost）仍定义在 MainWindow.xaml 里，
+        这样上百处 x:Name 接线一行都不用动。本页第一次 Loaded 时把 PageHost
+        从主窗口的逻辑树里摘过来挂成自己的 Content。
+        导航项上配了 NavigationCacheMode="Required"，本页只创建一次，
+        摘挂也只发生一次；即使缓存失效被重建，AttachHost 里的防御性摘父逻辑
+        也能把 PageHost 从旧页面手里要回来。
+    -->
+</Page>

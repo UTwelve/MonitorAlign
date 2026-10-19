@@ -1,0 +1,26 @@
+﻿<Application x:Class="MonitorAlign.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!--
+                    Fluent 2 的观感全部交给 Wpf.Ui（lepoco/wpfui）：
+                    标准令牌、控件模板、滚动条、TitleBar、Card 都在这里。
+
+                    默认给 Dark 只是为了有个确定初值；真正的浅/深由 ThemeManager
+                    在 App.OnStartup 里按系统设置调 ApplicationThemeManager.Apply 决定。
+
+                    下面两本字典务必放在后面（优先级更低也不要紧，因为键名不冲突）：
+                      · Palette.*  只装 Wpf.Ui 没有的键（拓扑图 / 覆盖层标尺配色）
+                      · Widgets    覆盖层自绘控件的样式
+                -->
+                <ui:ThemesDictionary Theme="Dark"/>
+                <ui:ControlsDictionary/>
+                <ResourceDictionary Source="Themes/Palette.Light.xaml"/>
+                <ResourceDictionary Source="Themes/Widgets.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

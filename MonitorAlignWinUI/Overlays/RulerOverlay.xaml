@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<local:OverlayWindowBase
+    x:Class="MonitorAlign.Overlay.RulerOverlay"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:MonitorAlign.Overlay">
+
+    <!-- 根元素必须是 OverlayWindowBase 而不是 Window：XAML 生成的另一半分部类
+         会跟着根元素的类型声明基类，写 Window 就与 C# 侧的 OverlayWindowBase 冲突（CS0263）。
+
+         覆盖层内容全部由 RulerOverlay.xaml.cs 按 RulerGeometry 算出来再摆。
+         这里只留一张空画布：坐标系是"本屏左上角为原点"的 DIP。
+         画布不能有底色 —— 底色会吃掉整个窗口的透明，也会让穿透失效。 -->
+    <Canvas x:Name="Root" />
+</local:OverlayWindowBase>

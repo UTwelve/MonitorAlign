@@ -1,0 +1,38 @@
+# 构建产物
+[Bb]in/
+[Oo]bj/
+dist/
+dist-winui/
+dist-setup/
+
+# 发布包与二进制（仓库只存源码）
+*.exe
+*.dll
+*.pdb
+*.zip
+*.msi
+*.nupkg
+*.cache
+
+# 本地运行产物
+MonitorAlign.settings.json
+MonitorAlign.settings.json.tmp
+MonitorAlign-info.txt
+MonitorAlign-geomcheck.txt
+MonitorAlign-diag.txt
+
+# 临时验收截图（发布用截图在 docs/screenshots）
+_*.png
+验证截图/
+
+# 本地工作区内容（不上传）
+.workbuddy/
+outputs/
+设计/
+bak/
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo

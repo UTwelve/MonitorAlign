@@ -1,0 +1,16 @@
+<Page x:Class="MonitorAlign.Pages.DevPage"
+         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+         xmlns:loc="clr-namespace:MonitorAlign">
+    <!-- 占位页：第三项「扩展功能」用。图标在 Loaded 时跟着所选项换。 -->
+    <StackPanel x:Name="Root" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <ui:SymbolIcon x:Name="DevIcon" Symbol="Wrench20" FontSize="36"
+                       HorizontalAlignment="Center"
+                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+        <ui:TextBlock FontTypography="Subtitle"
+                      Text="{x:Static loc:Loc.DevPlaceholder}"
+                      Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                      HorizontalAlignment="Center" Margin="0,14,0,0"/>
+    </StackPanel>
+</Page>

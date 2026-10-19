@@ -1,0 +1,133 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- MonitorAlign · WinUI 3 版（v2.0 预研）
+       与 WPF 版（../MonitorAlign）并存：共享 Core 以源码链接方式复用，
+       界面层全部按 WinUI 3 / Fluent 2 重写（winui3-skills 模式：x:Bind + MVVM + DI）。
+
+       部署形态：unpackaged + Windows App SDK 自包含 —— 不装运行时、不打包 MSIX，
+       保持"绿色软件"的使用方式（WPF 版的发布传统）。 -->
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>MonitorAlign</RootNamespace>
+    <!-- exe 名必须与 WPF 版一致（就叫 MonitorAlign）：
+         WinUI3 版是 v2.0.0 接 v1.6.0 的棒，同一个安装目录、同一个 AppId，
+         产物名不一致的话用户目录里会并排躺着两个程序（旧的还叫 MonitorAlign.exe）。
+         ⚠ 进程间的**单实例锁**仍带 WinUI3 后缀（见 SingleInstance.cs）——
+         那是刻意的：两版要能同时开着做对比，互相不能顶掉对方。 -->
+    <AssemblyName>MonitorAlign</AssemblyName>
+
+    <!-- 版本号唯一来源：Loc.AppVersion 读的就是它（设置页「关于」显示的就是这个）。
+         改这里就够，别在 XAML 里硬编码。 -->
+    <Version>2.0.2.0</Version>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <UseWinUI>true</UseWinUI>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+
+    <!-- 绿色部署：不打包 MSIX、Windows App SDK 自包含（目标机无需安装运行时）。
+         自包含必须给出具体架构（Microsoft.WindowsAppSDK.SelfContained.targets 的
+         GetWindowsAppSDKNativePlatform 会校验），只支持 x64 / x86 / arm64。 -->
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <AppxPackage>false</AppxPackage>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+
+    <!-- 与 WPF 版同一份清单规则：只允许这几个元素，多写一个 SxS 就被拒 -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+
+    <!-- 单文件发布：WindowsAppSDK 的 SingleFile.targets 要求 EnableMsixTooling
+         （它负责生成**嵌入式** resources.pri；没有它 XAML 资源会缺）。
+         只在真的走单文件时才打开 —— 对日常 Debug 构建没有任何影响。 -->
+    <EnableMsixTooling Condition="'$(PublishSingleFile)' == 'true'">true</EnableMsixTooling>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1"/>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2"/>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0"/>
+  </ItemGroup>
+
+  <!-- ===================== 共享 Core（源码链接，两版同一份逻辑） =====================
+       清单与分工：
+         · 直接链接：Alignment / DisplayArrangement / DisplayInfo / Loc / SelfCheck /
+           SettingsStore / TopologyAnalyzer / RulerGeometry / Win32 —— 全部无 WPF 依赖
+           （DisplayInfo 用的 System.Windows.Rect 由本工程的 RectShim.cs 提供）。
+         · 直接链接：EdgeGlowConfig —— 纯数据，两版共用同一份定义。
+         · 不链接：EdgeGlowService（WPF DispatcherTimer，WinUI3 版在 Services/ 重写）。
+         · 各自持有：Diag（WPF 版定义在它的 App.xaml.cs 里，本工程在 Diag.cs）。 -->
+  <ItemGroup>
+    <Compile Include="..\MonitorAlign\Core\Alignment.cs">
+      <Link>Core\Alignment.cs</Link>
+    </Compile>
+    <Compile Include="..\MonitorAlign\Core\DisplayArrangement.cs">
+      <Link>Core\DisplayArrangement.cs</Link>
+    </Compile>
+    <Compile Include="..\MonitorAlign\Core\DisplayInfo.cs">
+      <Link>Core\DisplayInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\MonitorAlign\Core\EdgeGlowConfig.cs">
+      <Link>Core\EdgeGlowConfig.cs</Link>
+    </Compile>
+    <Compile Include="..\MonitorAlign\Core\Loc.cs">
+      <Link>Core\Loc.cs</Link>
+    </Compile>
+    <Compile Include="..\MonitorAlign\Core\SelfCheck.cs">
+      <Link>Core\SelfCheck.cs</Link>
+    </Compile>
+    <Compile Include="..\MonitorAlign\Core\SettingsStore.cs">
+      <Link>Core\SettingsStore.cs</Link>
+    </Compile>
+    <Compile Include="..\MonitorAlign\Core\TopologyAnalyzer.cs">
+      <Link>Core\TopologyAnalyzer.cs</Link>
+    </Compile>
+    <Compile Include="..\MonitorAlign\Overlay\RulerGeometry.cs">
+      <Link>Overlay\RulerGeometry.cs</Link>
+    </Compile>
+    <Compile Include="..\MonitorAlign\Overlay\SeamGaugeGeometry.cs">
+      <Link>Overlay\SeamGaugeGeometry.cs</Link>
+    </Compile>
+    <Compile Include="..\MonitorAlign\Native\Win32.cs">
+      <Link>Native\Win32.cs</Link>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\app.ico" CopyToOutputDirectory="PreserveNewest"/>
+  </ItemGroup>
+
+  <!-- ===================== 目录版发布必须补带编译后的 XAML =====================
+       ⚠ 不补这一条，发布出来的程序一启动就 "XAML parsing failed"（0xC000027B），
+       而 Debug 目录里跑得好好的 —— 极其迷惑。
+
+       原因：unpackaged（WindowsPackageType=None）的 WinUI 3 项目里，
+       编译后的 XAML（9 个 *.xbf）与应用的资源索引（MonitorAlign.pri）
+       是 XAML 编译器**直接写进构建输出目录**的，它们没有登记进
+       publish 的文件清单 —— dotnet publish 只复制它认识的项。
+       实测 dist-winui 里 .xbf 个数 = 0、MonitorAlign.pri 也不存在。
+
+       所以这里在 Publish 之后手动搬一趟（含子目录 Overlays/ Views/ Themes/）。
+       顺带把 .pdb 剔掉：发布产物不该带调试符号。 -->
+  <Target Name="PublishWinUiXamlArtifacts" AfterTargets="Publish">
+    <ItemGroup>
+      <XamlArtifact Include="$(OutDir)**\*.xbf"/>
+      <XamlArtifact Include="$(OutDir)$(AssemblyName).pri"/>
+    </ItemGroup>
+    <Copy SourceFiles="@(XamlArtifact)"
+          DestinationFiles="@(XamlArtifact->'$(PublishDir)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true"/>
+  </Target>
+
+  <Target Name="TrimPublishPdb" AfterTargets="Publish">
+    <ItemGroup>
+      <PublishPdb Include="$(PublishDir)**\$(AssemblyName).pdb"/>
+    </ItemGroup>
+    <Delete Files="@(PublishPdb)"/>
+  </Target>
+
+</Project>

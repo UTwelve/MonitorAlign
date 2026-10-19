@@ -1,0 +1,53 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>   <!-- 托盘常驻需要 WinForms NotifyIcon -->
+    <LangVersion>latest</LangVersion>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Resources\app.ico</ApplicationIcon>
+    <AssemblyName>MonitorAlign</AssemblyName>
+    <RootNamespace>MonitorAlign</RootNamespace>
+    <Version>1.6.0.0</Version>
+    <Product>MonitorAlign 显示器对齐工具</Product>
+    <Copyright>Copyright (c) 2026 UTwelve</Copyright>
+
+    <!-- 单文件绿色发布：自包含 + 单文件 + 压缩 -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <!-- 注意：绝不能开启 InvariantGlobalization。
+         WPF 内部模板（ContentPresenter）会解析 xml:lang 并调用 XmlLanguage.GetSpecificCulture()，
+         Invariant 模式下会抛 InvalidOperationException: Cannot find non-neutral culture related to 'en-us'。 -->
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 让 MainWindow.Icon="Resources/app.ico" 取得到。ApplicationIcon 只是写进 Win32 资源，
+         不会自动变成 WPF 的 Resource，所以必须显式声明一份。 -->
+    <Resource Include="Resources\app.ico"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- UseWindowsForms 会把 System.Drawing / System.Windows.Forms 加进隐式 using，
+         与 WPF 的 Brush / Point / KeyEventArgs 等类型全线二义。托盘代码一律全限定名，
+         这里把这两条隐式 using 摘掉。 -->
+    <Using Remove="System.Drawing"/>
+    <Using Remove="System.Windows.Forms"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Fluent 2 / WinUI 3 观感的 WPF 控件库（lepoco/wpfui，MIT）。
+         自己手搓样式永远差一口气：Mica 的窗口形态、TitleBar、Card、NavigationView、
+         滚动条这些它都按 Win11 原生几何量过。用现成的，我们只往里填业务。 -->
+    <PackageReference Include="WPF-UI" Version="4.3.0"/>
+  </ItemGroup>
+
+</Project>

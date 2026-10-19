@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    扩展功能页（导航 tag=dev）· 接缝标尺 → 目标分辨率。
+
+    流程：选一条接缝 → 「放置标尺」在接缝两端各摆一对（基准屏白色固定 / 副屏蓝色可拖）
+          → 用户看着两块屏把每对拖成一条直线 → 这里实时算出像素尺度比与目标分辨率。
+
+    ⚠ 只算不改：不写显示设置、不碰存档，页脚常驻声明。
+    控件全是 WinUI 原生（ComboBox / Button / InfoBar / TextBlock），卡片写法同泛光页。
+-->
+<Page
+    x:Class="MonitorAlign.Views.DevPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:loc="using:MonitorAlign"
+    xmlns:vm="using:MonitorAlign.ViewModels"
+    NavigationCacheMode="Required">
+
+    <Page.Resources>
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}"/>
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+    </Page.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Padding="24,20,24,24" MaxWidth="880" HorizontalAlignment="Stretch">
+
+            <TextBlock Text="{x:Bind loc:Loc.NavDev2}"
+                       Style="{ThemeResource TitleTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorPrimaryBrush}" TextWrapping="Wrap"/>
+            <TextBlock Text="{x:Bind loc:Loc.DevDesc}"
+                       Style="{ThemeResource BodyTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       TextWrapping="Wrap" Margin="0,8,0,0"/>
+
+            <!-- ① 选接缝 + 放标尺 -->
+            <Border Style="{StaticResource Card}" Margin="0,14,0,0">
+                <StackPanel>
+                    <TextBlock Text="{x:Bind loc:Loc.DevSeamSection}"
+                               Style="{ThemeResource BodyStrongTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorPrimaryBrush}" TextWrapping="Wrap"/>
+
+                    <ComboBox Margin="0,14,0,0" HorizontalAlignment="Stretch"
+                              Header="{x:Bind loc:Loc.DevPickSeam}"
+                              ItemsSource="{x:Bind ViewModel.Seams, Mode=OneWay}"
+                              SelectedItem="{x:Bind ViewModel.Picked, Mode=TwoWay}"
+                              DisplayMemberPath="Label"
+                              AutomationProperties.Name="{x:Bind loc:Loc.DevPickSeam}"/>
+
+                    <!-- 三个动作：放 / 撤 / 归零。归零与撤只在标尺在场时可用。 -->
+                    <Grid Margin="0,12,0,0" ColumnSpacing="8" RowSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Button Grid.ColumnSpan="2" HorizontalAlignment="Left"
+                                Command="{x:Bind ViewModel.PlaceCommand}"
+                                Style="{ThemeResource AccentButtonStyle}"
+                                AutomationProperties.Name="{x:Bind loc:Loc.DevPlace}">
+                            <TextBlock Text="{x:Bind loc:Loc.DevPlace}" TextWrapping="Wrap"/>
+                        </Button>
+                        <Button Grid.Row="1" HorizontalAlignment="Stretch"
+                                Command="{x:Bind ViewModel.ResetCommand}"
+                                AutomationProperties.Name="{x:Bind loc:Loc.DevReset}">
+                            <TextBlock Text="{x:Bind loc:Loc.DevReset}" TextWrapping="Wrap"/>
+                        </Button>
+                        <Button Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch"
+                                Command="{x:Bind ViewModel.ClearCommand}"
+                                AutomationProperties.Name="{x:Bind loc:Loc.DevClear}">
+                            <TextBlock Text="{x:Bind loc:Loc.DevClear}" TextWrapping="Wrap"/>
+                        </Button>
+                    </Grid>
+
+                    <!-- 状态条：常驻，文案随状态走。
+                         Severity 固定 Informational —— VM 不许碰 Microsoft.UI.Xaml.*，
+                         而 InfoBarSeverity 正是那个命名空间下的枚举，所以颜色不往 VM 里带。 -->
+                    <InfoBar Margin="0,12,0,0" IsClosable="False" IsOpen="True"
+                             Severity="Informational"
+                             Message="{x:Bind ViewModel.InfoMessage, Mode=OneWay}"/>
+
+                    <TextBlock Text="{x:Bind loc:Loc.DevHowTo}"
+                               Style="{ThemeResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                               TextWrapping="Wrap" Margin="0,8,0,0"
+                               Visibility="{x:Bind ViewModel.Active, Mode=OneWay}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- ② 计算结果 -->
+            <Border Style="{StaticResource Card}" Margin="0,4,0,0">
+                <StackPanel>
+                    <TextBlock Text="{x:Bind loc:Loc.DevResultSection}"
+                               Style="{ThemeResource BodyStrongTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorPrimaryBrush}" TextWrapping="Wrap"/>
+
+                    <!-- 目标分辨率：大字 + 复制 -->
+                    <StackPanel Margin="0,14,0,0">
+                        <TextBlock Text="{x:Bind loc:Loc.DevTargetLabel}"
+                                   Style="{ThemeResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                   TextWrapping="Wrap"/>
+                        <TextBlock Text="{x:Bind ViewModel.TargetText, Mode=OneWay}"
+                                   Style="{ThemeResource SubtitleTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                   TextWrapping="Wrap" Margin="0,2,0,0"/>
+                        <Button Margin="0,8,0,0" HorizontalAlignment="Left"
+                                Command="{x:Bind ViewModel.CopyCommand}"
+                                AutomationProperties.Name="{x:Bind loc:Loc.DevCopy}">
+                            <TextBlock Text="{x:Bind loc:Loc.DevCopy}" TextWrapping="Wrap"/>
+                        </Button>
+                        <TextBlock Text="{x:Bind loc:Loc.DevCopied}"
+                                   Style="{ThemeResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource SystemFillColorSuccessBrush}"
+                                   TextWrapping="Wrap" Margin="0,4,0,0"
+                                   Visibility="{x:Bind ViewModel.Copied, Mode=OneWay}"/>
+                    </StackPanel>
+
+                    <!-- 一句话结论 -->
+                    <TextBlock Text="{x:Bind ViewModel.VerdictText, Mode=OneWay}"
+                               Style="{ThemeResource BodyTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               TextWrapping="Wrap" Margin="0,12,0,0"/>
+
+                    <!-- 明细：比值 / 理论值 / 当前分辨率 / 位移 -->
+                    <Grid Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.Column="0">
+                            <TextBlock Text="{x:Bind loc:Loc.DevRatioLabel}"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap"/>
+                            <TextBlock Text="{x:Bind ViewModel.RatioText, Mode=OneWay}"
+                                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorPrimaryBrush}" TextWrapping="Wrap"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="0" Grid.Column="2">
+                            <TextBlock Text="{x:Bind loc:Loc.DevTheoryLabel}"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap"/>
+                            <TextBlock Text="{x:Bind ViewModel.TheoryText, Mode=OneWay}"
+                                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorPrimaryBrush}" TextWrapping="Wrap"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,12,0,0">
+                            <TextBlock Text="{x:Bind loc:Loc.DevCurrentLabel}"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap"/>
+                            <TextBlock Text="{x:Bind ViewModel.CurrentText, Mode=OneWay}"
+                                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorPrimaryBrush}" TextWrapping="Wrap"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,12,0,0">
+                            <TextBlock Text="{x:Bind loc:Loc.DevOffsetsLabel}"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap"/>
+                            <TextBlock Text="{x:Bind ViewModel.OffsetText, Mode=OneWay}"
+                                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorPrimaryBrush}" TextWrapping="Wrap"/>
+                        </StackPanel>
+
+                        <!-- 比值的口径说明，横跨两列 -->
+                        <TextBlock Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
+                                   Margin="0,12,0,0"
+                                   Text="{x:Bind loc:Loc.DevRatioNote}"
+                                   Style="{ThemeResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                   TextWrapping="Wrap"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ③ 只算不改：常驻声明 -->
+            <TextBlock Margin="0,12,0,0"
+                       Text="{x:Bind loc:Loc.DevReadOnly}"
+                       Style="{ThemeResource CaptionTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                       TextWrapping="Wrap"/>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

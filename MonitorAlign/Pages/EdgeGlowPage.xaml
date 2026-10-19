@@ -1,0 +1,161 @@
+<Page x:Class="MonitorAlign.Pages.EdgeGlowPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:loc="clr-namespace:MonitorAlign">
+    <!-- 功能一「边缘泛光」：启用开关 + 效果参数（灵敏度/亮度/距离）+ 接缝颜色列表。
+         文本一律显式 Foreground（Frame/Page 边界断继承链，老教训）。
+         排版以 WPF UI Gallery 为准：页面左右边距 48、卡间距 4、卡片内 16。 -->
+    <StackPanel x:Name="Root" Margin="48,16,48,24">
+        <ui:TextBlock FontTypography="Title" Text="{x:Static loc:Loc.NavEdgeGlow}"
+                      Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+        <ui:TextBlock FontTypography="Body" Text="{x:Static loc:Loc.EdgeGlowDesc}"
+                      Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                      TextWrapping="Wrap" Margin="0,8,0,0"/>
+
+        <!-- ① 启用：开着时关窗只缩到托盘，右键托盘图标才是真退出 -->
+        <ui:Card Margin="0,14,0,0" Padding="16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <ui:SymbolIcon Symbol="Lightbulb20" FontSize="20" VerticalAlignment="Center"/>
+                    <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static loc:Loc.EdgeGlowToggle}"
+                                  Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                                  Margin="12,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                <ui:ToggleSwitch x:Name="GlowToggle" Grid.Column="1"
+                                 Checked="GlowToggle_Changed" Unchecked="GlowToggle_Changed"/>
+            </Grid>
+        </ui:Card>
+
+        <!-- ② 效果参数 -->
+        <ui:Card Margin="0,4,0,0" Padding="16">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon Symbol="Options20" FontSize="20" VerticalAlignment="Center"/>
+                    <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static loc:Loc.GlowSectionEffect}"
+                                  Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                                  Margin="12,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- 灵敏度（倍数）：起辉距离 = 120px ÷ 倍数 -->
+                <Grid Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <ui:TextBlock FontTypography="Body" Text="{x:Static loc:Loc.GlowSensitivity}"
+                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                        <ui:TextBlock x:Name="TxtSensitivityHint" FontTypography="Caption"
+                                      Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                      Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <ui:NumberBox x:Name="NumSensitivity" Grid.Column="1" Width="150"
+                                  Minimum="0.25" Maximum="8" SmallChange="0.25"
+                                  SpinButtonPlacementMode="Compact"
+                                  ValueChanged="NumSensitivity_Changed"/>
+                </Grid>
+
+                <!-- 亮度：滑条最直观，旁边带百分比读数 -->
+                <Grid Margin="0,14,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <ui:TextBlock Grid.Column="0" FontTypography="Body" Text="{x:Static loc:Loc.GlowBrightness}"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                  VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ui:TextBlock x:Name="TxtBrightnessVal" FontTypography="BodyStrong" MinWidth="40"
+                                      TextAlignment="Right" VerticalAlignment="Center"
+                                      Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                        <Slider x:Name="SliderBrightness" Width="160" Margin="12,0,0,0"
+                                Minimum="0.05" Maximum="1" TickFrequency="0.05"
+                                IsSnapToTickEnabled="True" IsMoveToPointEnabled="True"
+                                VerticalAlignment="Center"
+                                ValueChanged="SliderBrightness_Changed"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- 光晕距离：光从接缝向两侧照射多远 -->
+                <Grid Margin="0,14,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <ui:TextBlock FontTypography="Body" Text="{x:Static loc:Loc.GlowDistance}"
+                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                        <ui:TextBlock FontTypography="Caption" Text="{x:Static loc:Loc.GlowDistanceHint}"
+                                      Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                      Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <ui:NumberBox x:Name="NumDistance" Grid.Column="1" Width="150"
+                                  Minimum="24" Maximum="320" SmallChange="16"
+                                  SpinButtonPlacementMode="Compact"
+                                  ValueChanged="NumDistance_Changed"/>
+                </Grid>
+            </StackPanel>
+        </ui:Card>
+
+        <!-- ③ 接缝颜色：+ 添加接缝 → 行（色块 + 标签 + 移除）→ 选中行出现编辑器 -->
+        <ui:Card Margin="0,4,0,0" Padding="16">
+            <StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="PaintBrush20" FontSize="20" VerticalAlignment="Center"/>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static loc:Loc.GlowSeamColors}"
+                                      Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                                      Margin="12,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <ui:Button x:Name="BtnAddSeam" Grid.Column="1" Appearance="Secondary"
+                               Icon="{ui:SymbolIcon Add20}" Padding="8,4"
+                               ToolTip="{x:Static loc:Loc.GlowAddSeam}"
+                               Click="BtnAddSeam_Click"/>
+                </Grid>
+                <ui:TextBlock FontTypography="Caption" Text="{x:Static loc:Loc.GlowSeamColorsDesc}"
+                              Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                              TextWrapping="Wrap" Margin="0,8,0,0"/>
+
+                <!-- 已自定义的接缝（行由代码生成：色块 + 接缝名 + 移除） -->
+                <StackPanel x:Name="SeamRows" Margin="0,4,0,0"/>
+                <ui:TextBlock x:Name="TxtNoCustom" FontTypography="Caption"
+                              Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                              Margin="0,4,0,0"/>
+
+                <!-- 选中行的编辑器：色板 / 主题色 / 十六进制 -->
+                <Border x:Name="SeamEditor" Visibility="Collapsed" Margin="0,10,0,0" Padding="12"
+                        Background="{DynamicResource ControlFillColorDefaultBrush}"
+                        BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                        BorderThickness="1" CornerRadius="6">
+                    <StackPanel>
+                        <ui:TextBlock x:Name="TxtEditorTitle" FontTypography="BodyStrong"
+                                      Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                        <WrapPanel x:Name="PalettePanel" Margin="0,10,0,0"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <ui:Button x:Name="BtnThemeColor" Appearance="Secondary"
+                                       Icon="{ui:SymbolIcon Color20}"
+                                       Content="{x:Static loc:Loc.GlowUseTheme}"
+                                       Click="BtnThemeColor_Click"/>
+                            <TextBox x:Name="TxtHex" Width="120" Margin="12,0,0,0"
+                                     VerticalAlignment="Center"
+                                     ToolTip="{x:Static loc:Loc.GlowHexHint}"
+                                     KeyDown="TxtHex_KeyDown"/>
+                            <ui:Button x:Name="BtnHexApply" Margin="8,0,0,0" Padding="8,4"
+                                       Icon="{ui:SymbolIcon CheckmarkCircle24}"
+                                       Click="BtnHexApply_Click"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ui:Card>
+    </StackPanel>
+</Page>

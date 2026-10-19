@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    对齐页：显示器排列（拓扑缩略图 + 可点接缝点）+ 偏移读数 + 撤销。
+
+    NavigationCacheMode=Required：页面重建会毁掉覆盖层会话（标尺窗口跟着没），
+    这是 WPF 版用 PageHost 换来的教训，WinUI 版用缓存模式达成同一件事。
+
+    卡片写法：WinUI 3 没有 Card 控件，按 Fluent 配方手搭——
+    CardBackgroundFillColorDefaultBrush + CardStrokeColorDefaultBrush + 圆角 8。
+-->
+<Page
+    x:Class="MonitorAlign.Views.AlignPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:loc="using:MonitorAlign"
+    NavigationCacheMode="Required">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Padding="24,20,24,24" MaxWidth="880" HorizontalAlignment="Stretch">
+
+            <TextBlock Text="{x:Bind loc:Loc.PageTitle}"
+                       Style="{ThemeResource TitleTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorPrimaryBrush}" TextWrapping="Wrap"/>
+            <!-- 状态行：启动是操作提示，之后显示"已移动 / 已撤销" -->
+            <TextBlock Text="{x:Bind ViewModel.StatusText, Mode=OneWay}"
+                       Style="{ThemeResource BodyTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       TextWrapping="Wrap" Margin="0,8,0,0"/>
+
+            <!-- ① 显示器排列 -->
+            <Border Margin="0,14,0,0" Padding="16"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1" CornerRadius="8">
+                <StackPanel>
+                    <TextBlock Text="{x:Bind loc:Loc.SectionTarget}"
+                               Style="{ThemeResource BodyStrongTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorPrimaryBrush}" TextWrapping="Wrap"/>
+
+                    <!-- 高度由 VM 按排列宽高比算，宽度跟着卡片走。
+                         每条接缝的中点画一枚可点的接缝点，点击即切换要对齐的接缝。 -->
+                    <Canvas x:Name="TopoCanvas" Margin="0,16,0,0"
+                            Height="{x:Bind ViewModel.CanvasHeight, Mode=OneWay}"
+                            SizeChanged="TopoCanvas_SizeChanged"/>
+
+                    <TextBlock Text="{x:Bind ViewModel.SeamHint, Mode=OneWay}"
+                               Style="{ThemeResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               TextWrapping="Wrap" Margin="0,12,0,0"/>
+                    <!-- 物理换算：告诉用户 1 像素在这台屏上到底多宽 -->
+                    <TextBlock Text="{x:Bind ViewModel.ScaleText, Mode=OneWay}"
+                               Style="{ThemeResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                               TextWrapping="Wrap" Margin="0,4,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- ② 偏移读数 -->
+            <Border Margin="0,4,0,0" Padding="16"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1" CornerRadius="8">
+                <StackPanel>
+                    <TextBlock Text="{x:Bind loc:Loc.SectionReadout}"
+                               Style="{ThemeResource BodyStrongTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorPrimaryBrush}" TextWrapping="Wrap"/>
+
+                    <Grid ColumnSpacing="16" Margin="0,16,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{x:Bind loc:Loc.MetricSeamError}"
+                                   Style="{ThemeResource BodyTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   TextWrapping="Wrap" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.ErrorText, Mode=OneWay}"
+                                   Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                   TextWrapping="Wrap" TextAlignment="Right" VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <Grid ColumnSpacing="16" Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{x:Bind loc:Loc.MetricApplied}"
+                                   Style="{ThemeResource BodyTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   TextWrapping="Wrap" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.AppliedText, Mode=OneWay}"
+                                   Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                   TextWrapping="Wrap" TextAlignment="Right" VerticalAlignment="Center"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ③ 唯一操作：撤销到启动前 -->
+            <Button Margin="0,16,0,0" HorizontalAlignment="Left"
+                    Command="{x:Bind ViewModel.UndoCommand}"
+                    ToolTipService.ToolTip="{x:Bind loc:Loc.TooltipUndoAll}"
+                    AutomationProperties.Name="{x:Bind loc:Loc.BtnUndoAll}">
+                <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <SymbolIcon Symbol="Undo" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Text="{x:Bind loc:Loc.BtnUndoAll}"
+                               TextWrapping="Wrap" VerticalAlignment="Center"/>
+                </Grid>
+            </Button>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
